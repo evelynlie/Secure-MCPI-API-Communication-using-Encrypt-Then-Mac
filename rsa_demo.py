@@ -4,12 +4,12 @@ import rsa # import RSA module
 
 def keyGenerate():
     # To generate public key and private key
-    (pubicKey, privateKey) = rsa.newkeys(2048) #rsa.newskeys(number_of_bits)
+    (publicKey, privateKey) = rsa.newkeys(2048) #rsa.newskeys(number_of_bits)
 
     # save publicKey in file
     with open('public_key.pem', mode='wb') as public_file:
         # Saves the key in PKCS#1 PEM format.
-        public_file.write(pubicKey.save_pkcs1('PEM'))
+        public_file.write(publicKey.save_pkcs1('PEM'))
 
     # save privateKey in file
     with open('private_key.pem', mode='wb') as private_file:
