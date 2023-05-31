@@ -10,7 +10,6 @@ Please summarise each team member's contributions here. Include both an approxim
 Ideally, any disputes reagarding the contributions should be resolved prior to submission, but if there is an unresolved dispute then please indicate that this is the case. Do not override each other's contribution statements immediately prior to the deadline -- this will be viewed dimly by the markers!
 
 # Mandatory: Student contributions
-
 - Go Chee Kin: 25%
 - Evelyn Lie: 25%
 - Nicholas Sito: 25%
@@ -19,3 +18,10 @@ Ideally, any disputes reagarding the contributions should be resolved prior to s
 ### Go Chee Kin, s3955624 (Github Username: rmit-kent-go)
 - Phase 1: Written summary on the MAC-then-encrypt technique's pros and cons
 - Phase 2: Written report on the RSA algorithm's security features, efficiency, security draw-backs and underlying technical details
+
+
+### Evelyn Lie, s3951140 (Github Username: eve-s3951140)
+- Phase 1: 
+    - Wrote a brief overview of the Encrypt-and-MAC technique along with its pros and cons.
+    - Provide a simple and straight-forward explanation about Asymmetric Encryption and Message Authentication Code (MAC), with references.
+- Phase 2:
