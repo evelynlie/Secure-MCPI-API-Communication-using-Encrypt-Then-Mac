@@ -4,7 +4,7 @@ import rsa # import RSA module
 
 def keyGenerate():
     # To generate public key and private key
-    (pubicKey, privateKey) = rsa.newkeys(512) #rsa.newskeys(number_of_bits)
+    (pubicKey, privateKey) = rsa.newkeys(2048) #rsa.newskeys(number_of_bits)
 
     # save publicKey in file
     with open('public_key.pem', mode='wb') as public_file:
