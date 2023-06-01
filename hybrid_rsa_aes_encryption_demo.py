@@ -60,7 +60,7 @@ if __name__ == "__main__":
     # Get public and private key with RSA.
     publicKey, privateKey = keyLoad()
 
-    # Generate a 16-byte (256-bit) random key for AES encryption and encoded as base64 to represented it as an ASCII string
+    # Generate a 32-byte (256-bit) random key for AES encryption and encoded as base64 to represented it as an ASCII string
     key = secrets.token_bytes(32)
     print('AES Symmetric key: ', key)
     AESkey = base64.b64encode(key).decode('ascii')
