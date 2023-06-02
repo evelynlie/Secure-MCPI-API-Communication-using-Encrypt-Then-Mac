@@ -6,7 +6,7 @@ import rsa # import RSA module
 
 """ @author: Aron Nieminen, Mojang AB"""
 
-global globla_private_key
+global global_private_key
 class RequestError(Exception):
     pass
 
@@ -93,7 +93,7 @@ class Connection:
 
         self.keyGenerate()
         # Get public and private key
-        publicKey, globla_private_key = self.keyLoad()
+        publicKey, global_private_key = self.keyLoad()
 
         c = self.encryption(s,publicKey)
         self._send(c)
