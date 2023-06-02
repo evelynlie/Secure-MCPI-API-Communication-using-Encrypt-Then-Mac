@@ -34,7 +34,7 @@ def keyLoad():
 
     return publicKey, privateKey
 
-def encryption(message, publicKey):
+def encryptRSA(message, publicKey):
     # Encode message into ASCII format (bytes)
     message_encode = message.encode('ascii')
 
@@ -44,7 +44,7 @@ def encryption(message, publicKey):
 
     return ciphertext
 
-def decryption(ciphertext, privateKey):
+def decryptRSA(ciphertext, privateKey):
     try:
         # Decrypt the ciphertext with private key to get the encoded message
         message_encode = rsa.decrypt(ciphertext, privateKey)
@@ -66,6 +66,7 @@ if __name__ == "__main__":
     AESkey = base64.b64encode(key).decode('ascii')
 
     plaintext = input("Type message here:")
+    # Create an AES cipher object with the key using the AES MODE_EAX mode
     cipherAES = AES.new(key, AES.MODE_EAX)
     # Retrieves the value of the nonce (number used once) from the AES cipher object cipherAES
     nonce = cipherAES.nonce 
@@ -74,11 +75,11 @@ if __name__ == "__main__":
     print(f'Ciphertext: {ciphertext}')
 
     # Encrypt the AES key with RSA public key
-    cipherKey = encryption(AESkey, publicKey)
+    cipherKey = encryptRSA(AESkey, publicKey)
     print('==========================ENCRYPTION COMPLETE==========================')
 
     # Decrypt the AES key with RSA private key
-    decryptkey = decryption(cipherKey, privateKey)
+    decryptkey = decryptRSA(cipherKey, privateKey)
     # Decode the decrypted AES key from base64 to bytes
     decryptedK = base64.b64decode(decryptkey)
     # The decrypted AES key is used to create an AES cipher object
