@@ -33,7 +33,7 @@ def encryption(message, publicKey):
     # Encode message into ASCII format (bytes)
     message_encode = message.encode('ascii')
 
-    # Encryption only happen if len(message_encode) == rsa.common.byte_size(publicKey.n):
+    # Encryption only happen if len(message_encode) <= rsa.common.byte_size(publicKey.n):
     # Encrypt the encoded message with publicKey into ciphertext
     ciphertext = rsa.encrypt(message_encode, publicKey)
 
