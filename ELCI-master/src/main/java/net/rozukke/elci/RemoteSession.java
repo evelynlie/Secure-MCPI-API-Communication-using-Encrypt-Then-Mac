@@ -114,6 +114,13 @@ public class RemoteSession {
 	}
 
 	protected void handleLine(String line) {
+		// Get private key created from the connection.py before decrypt
+
+			// load privatekey from private_key.pem
+
+		// Decrypt the ciphertext before getting the methodName and args
+		
+
 //		System.out.println(line);
 		String methodName = line.substring(0, line.indexOf("("));
 		//split string into args, handles , inside " i.e. ","

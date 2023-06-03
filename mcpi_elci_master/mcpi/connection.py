@@ -91,11 +91,16 @@ class Connection:
         """
         s = b"".join([f, b"(", flatten_parameters_to_bytestring(data), b")", b"\n"])
 
+        # Generate public and private key
         self.keyGenerate()
+
         # Get public and private key
         publicKey, global_private_key = self.keyLoad()
 
+        # Encrypt s with public key
         c = self.encryption(s,publicKey)
+
+        # call _send function
         self._send(c)
 
     def _send(self, s):
