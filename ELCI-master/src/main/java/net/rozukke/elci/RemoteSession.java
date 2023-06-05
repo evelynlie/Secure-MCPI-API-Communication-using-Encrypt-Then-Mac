@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import java.util.Base64;
 
 public class RemoteSession {
 
@@ -92,7 +93,7 @@ public class RemoteSession {
 	}
 
 	/** called from the server main thread */
-	public void tick() {
+	public void tick() throws StringIndexOutOfBoundsException, IllegalArgumentException{
 		if (origin == null) {
 			this.origin = new Location(plugin.getServer().getWorlds().get(0), 0, 0, 0);
 			}
@@ -113,20 +114,40 @@ public class RemoteSession {
 		}
 	}
 
-	protected void handleLine(String line) {
-		// Get private key created from the connection.py before decrypt
+	protected void handleLine(String line) throws StringIndexOutOfBoundsException, IllegalArgumentException{
+		try{
+			// Print line
+			System.out.println(line);
 
-			// load privatekey from private_key.pem
+			// Convert the line string to bytes
+			byte[] lineBytes = line.getBytes();
 
-		// Decrypt the ciphertext before getting the methodName and args
-		
-
-//		System.out.println(line);
-		String methodName = line.substring(0, line.indexOf("("));
-		//split string into args, handles , inside " i.e. ","
-		String[] args = line.substring(line.indexOf("(") + 1, line.length() - 1).split(",");
-		//System.out.println(methodName + ":" + Arrays.toString(args));
-		handleCommand(methodName, args);
+			// Encode the bytes to Base64
+			String base64String = Base64.getEncoder().encodeToString(lineBytes);
+			
+			// Convert the Base64-encoded line into a byte array
+			byte[] messageBytes = Base64.getDecoder().decode(base64String);
+			
+			// Decrypts the line
+			line = RSADecryption.messageDecryption(messageBytes);
+			
+			// Get the method name from the decrypted line
+			String methodName = line.substring(0, line.indexOf("("));
+			//split string into args, handles , inside " i.e. ","
+			String[] args = line.substring(line.indexOf("(") + 1, line.length() - 1).split(",");
+			//System.out.println(methodName + ":" + Arrays.toString(args));
+			handleCommand(methodName, args);
+		}
+		catch (StringIndexOutOfBoundsException e) {
+            System.out.println(e);
+		}
+		catch (IllegalArgumentException e) {
+			System.out.println(e);
+		}
+		catch (Exception e) {
+			System.out.println("Error occurred handling line");
+			e.printStackTrace();
+		}
 	}
 
 	protected void handleCommand(String c, String[] args) {
@@ -281,6 +302,8 @@ public class RemoteSession {
 						chatMessage.append(args[count]).append(",");
 					}
 					chatMessage = new StringBuilder(chatMessage.substring(0, chatMessage.length() - 1));
+
+					server.broadcastMessage("Testingg!!!!!!");
 					server.broadcastMessage(chatMessage.toString());
 
 					// events.clear

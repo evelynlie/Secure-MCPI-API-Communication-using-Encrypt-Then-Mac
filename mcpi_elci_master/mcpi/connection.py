@@ -3,6 +3,7 @@ import select
 import sys
 from .util import flatten_parameters_to_bytestring
 import rsa # import RSA module
+import base64
 
 """ @author: Aron Nieminen, Mojang AB"""
 
@@ -50,14 +51,18 @@ class Connection:
         return publicKey, privateKey
 
     def encryption(self, message, publicKey):
-        # Encode message into ASCII format (bytes)
-        message_encode = message.encode('ascii')
+        # # Print message
+        # print("Message: ", message)
+        
+        # message_encode = bytes(message, 'utf-8')
 
         # Encryption only happen if len(message_encode) <= rsa.common.byte_size(publicKey.n):
         # Encrypt the encoded message with publicKey into ciphertext
-        ciphertext = rsa.encrypt(message_encode, publicKey)
+        ciphertext = rsa.encrypt(message, publicKey)
 
-        return ciphertext
+        print("Ciphertext: ", base64.b64encode(ciphertext))
+
+        return base64.b64encode(ciphertext)
 
     def decryption(self, ciphertext, privateKey):
 
