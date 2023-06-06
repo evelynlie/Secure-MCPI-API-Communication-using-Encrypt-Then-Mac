@@ -119,17 +119,17 @@ public class RemoteSession {
 			// Print line
 			System.out.println(line);
 
-			// Convert the line string to bytes
-			byte[] lineBytes = line.getBytes();
+			// // Convert the line string to bytes
+			// byte[] lineBytes = line.getBytes();
 
-			// Encode the bytes to Base64
-			String base64String = Base64.getEncoder().encodeToString(lineBytes);
+			// // Encode the bytes to Base64
+			// String base64String = Base64.getEncoder().encodeToString(lineBytes);
 			
-			// Convert the Base64-encoded line into a byte array
-			byte[] messageBytes = Base64.getDecoder().decode(base64String);
+			// // Convert the Base64-encoded line into a byte array
+			// byte[] messageBytes = Base64.getDecoder().decode(base64String);
 			
-			// Decrypts the line
-			line = RSADecryption.messageDecryption(messageBytes);
+			// // Decrypts the line
+			// line = RSADecryption.messageDecryption(messageBytes);
 			
 			// Get the method name from the decrypted line
 			String methodName = line.substring(0, line.indexOf("("));
@@ -150,6 +150,25 @@ public class RemoteSession {
 		}
 	}
 
+	// Decrypt arguments received from the client
+	private String[] decryptArgs(String[] args) {
+		String[] decryptedArgs = new String[args.length];
+		for (int i = 0; i < args.length; i++) {
+			// Convert the line string to bytes
+			byte[] lineBytes = args[i].getBytes();
+
+			// Encode the bytes to Base64
+			String base64String = Base64.getEncoder().encodeToString(lineBytes);
+			
+			// Convert the Base64-encoded line into a byte array
+			byte[] messageBytes = Base64.getDecoder().decode(base64String);
+			
+			// Decrypts the line
+			decryptedArgs[i] = RSADecryption.messageDecryption(messageBytes);
+		}
+		return decryptedArgs;
+	}
+
 	protected void handleCommand(String c, String[] args) {
 		
 		try {
@@ -158,6 +177,9 @@ public class RemoteSession {
 			
 			// get the world
 			World world = origin.getWorld();
+
+			// decrypt args using the decrypt function
+			args = decryptArgs(args);
 			
 			// world.getBlock
 			switch (c) {
@@ -303,7 +325,6 @@ public class RemoteSession {
 					}
 					chatMessage = new StringBuilder(chatMessage.substring(0, chatMessage.length() - 1));
 
-					server.broadcastMessage("Testingg!!!!!!");
 					server.broadcastMessage(chatMessage.toString());
 
 					// events.clear

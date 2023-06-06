@@ -94,8 +94,6 @@ class Connection:
         The protocol uses CP437 encoding - https://en.wikipedia.org/wiki/Code_page_437
         which is mildly distressing as it can't encode all of Unicode.
         """
-        s = b"".join([f, b"(", flatten_parameters_to_bytestring(data), b")", b"\n"])
-
         # Generate public and private key
         self.keyGenerate()
 
@@ -103,10 +101,12 @@ class Connection:
         publicKey, global_private_key = self.keyLoad()
 
         # Encrypt s with public key
-        c = self.encryption(s,publicKey)
+        encrypted_data = self.encryption(flatten_parameters_to_bytestring(data),publicKey)
+
+        s = b"".join([f, b"(", encrypted_data, b")", b"\n"])
 
         # call _send function
-        self._send(c)
+        self._send(s)
 
     def _send(self, s):
         """

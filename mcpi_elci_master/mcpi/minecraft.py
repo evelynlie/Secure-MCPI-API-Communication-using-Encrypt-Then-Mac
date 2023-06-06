@@ -355,7 +355,7 @@ class Minecraft:
     def postToChat(self, msg):
         """Post a message to the game chat"""
         print('POSTTOCHAT WORK')
-        self.conn.mEncrypted(b"chat.post", msg)
+        self.conn.send(b"chat.post", msg)
 
     def doCommand(self, command):
         """Perform an ingame command. Requires a player to join the server"""

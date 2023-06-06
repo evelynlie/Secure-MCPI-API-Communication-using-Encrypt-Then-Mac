@@ -1,4 +1,5 @@
 package net.rozukke.elci;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,6 +43,7 @@ public class RSADecryption {
 
     // Reads private key file as a sequence of bytes, converts it into a String, and returns the String
     private static byte[] readKeyFile(String filePath) throws IOException {
+        //File privatekeyFile = new File(filePath);
         Path path = Paths.get(filePath);
         byte[] bytes = Files.readAllBytes(path);
         return bytes;
@@ -66,7 +68,7 @@ public class RSADecryption {
         // byte[] KeyBytes = Base64.getDecoder().decode(privateKeyPEM);
 
         // Generate a private key object that is a copy of the private_key.pem
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyContentsBytes);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(keyContentsBytes));
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         return keyFactory.generatePrivate(keySpec);
     }
