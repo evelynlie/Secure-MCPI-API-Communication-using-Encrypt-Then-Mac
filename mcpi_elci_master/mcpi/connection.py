@@ -76,7 +76,7 @@ class Connection:
             raise RequestError("%s failed"%self.lastSent.strip())
         
         # Convert the received public key string to bytes
-        public_key_bytes = base64.b64decode(s.encode('ascii'))
+        public_key_bytes = base64.b64decode(s)
 
         # Convert the public key bytes to PEM format
         pem_data = rsa.pem.save_pem(public_key_bytes, 'PUBLIC KEY')

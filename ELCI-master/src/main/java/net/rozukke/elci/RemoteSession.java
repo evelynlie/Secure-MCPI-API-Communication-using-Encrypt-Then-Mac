@@ -23,7 +23,14 @@ import java.util.Iterator;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 public class RemoteSession {
 
@@ -63,12 +70,14 @@ public class RemoteSession {
 
 	private PrivateKey privateKey;
     private PublicKey publicKey;
+    private String privateKeyString; 
 
 	public RemoteSession(ELCIPlugin plugin, Socket socket) throws IOException, NoSuchAlgorithmException {
 		this.socket = socket;
 		this.plugin = plugin;
 		this.privateKey = null;
 		this.publicKey = null;
+		this.privateKeyString = null;
 		init();
 	}
 
@@ -83,10 +92,12 @@ public class RemoteSession {
 		keyGen.initialize(2048); // initialize with key size 2048
 		KeyPair keyPair = keyGen.generateKeyPair();
 		this.privateKey = keyPair.getPrivate();
+		privateKeyString = Base64.getEncoder().encodeToString(privateKey.getEncoded());
 		this.publicKey = keyPair.getPublic();
 		System.out.println("Public Key: " + publicKey);
 		String publicKeyString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
 		System.out.println("Public Key String: " + publicKeyString);
+		System.out.println("Public Key Length in Java: " + publicKeyString.length());
 		// Send the public key to the client
 		outQueue.add(publicKeyString);
 		startThreads();
@@ -129,39 +140,80 @@ public class RemoteSession {
 			pendingRemoval = true;
 		}
 	}
+	
+	public static String decrypt(String data, String privateKeyString) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+        return decrypt(Base64.getDecoder().decode(data.getBytes()), getPrivateKey(privateKeyString));
+    }
+
+	public static String decrypt(byte[] data, PrivateKey privateKey) throws StringIndexOutOfBoundsException, IllegalArgumentException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException{
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        return new String(cipher.doFinal(data));
+    }
+
+	public static PrivateKey getPrivateKey(String privateKeyString){
+        PrivateKey privateKey = null;
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyString.getBytes()));
+        KeyFactory keyFactory = null;
+        try {
+            keyFactory = KeyFactory.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        try {
+            privateKey = keyFactory.generatePrivate(keySpec);
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        return privateKey;
+    }
 
 	protected void handleLine(String line) throws StringIndexOutOfBoundsException, IllegalArgumentException{
 		try{
 			// Print line
-			System.out.println("Encrypted Message: " + line);
-			// // Convert the line string to bytes
-			// byte[] lineBytes = line.getBytes();
+			System.out.println("Message from Python: " + line);
 
-			// // Encode the bytes to Base64
-			// String base64String = Base64.getEncoder().encodeToString(lineBytes);
-			
-			// // Convert the Base64-encoded line into a byte array
-			// byte[] messageBytes = Base64.getDecoder().decode(base64String);
-			
-			// // Decrypts the line
-			// line = RSADecryption.messageDecryption(messageBytes);
+			// Get the encryted message from the line
+			String encryptedMessage = line.substring(10, line.length() - 1);
+			System.out.println("Encrypted Message: " + encryptedMessage);
+
+			// Convert the encrypted message string to bytes
+			byte[] encryptedMessageBytes = encryptedMessage.getBytes();
+			System.out.println("MessageBytes Length: " + encryptedMessageBytes.length);
+
+			System.out.println("Private Key string: " + privateKeyString);
+			int totalBytes = privateKeyString.getBytes().length;
+			System.out.println("Total Private Key Bytes: " + totalBytes);
+
+			String decryptedString = decrypt(encryptedMessage, privateKeyString);
+
+			String plaintext = new String(decryptedString);
+			System.out.println("Decrypted Message: " + plaintext);
+
+			// plaintext += ')';
 			
 			// Get the method name from the decrypted line
 			String methodName = line.substring(0, line.indexOf("("));
-			System.out.println("Method Name: " + methodName);
 			//split string into args, handles , inside " i.e. ","
-			String[] args = line.substring(line.indexOf("(") + 1, line.length() - 1).split(",");
+			// plaintext = (abc)
+			// String[] args = plaintext.substring(plaintext.indexOf("(") + 1, plaintext.length() - 1).split(",");
+			String[] args = plaintext.split(",");
+			// args += ')';
+			// String[] args = "(" + _s;
+
+			// args = 
+
 			//System.out.println(methodName + ":" + Arrays.toString(args));
 			handleCommand(methodName, args);
 		}
 		catch (StringIndexOutOfBoundsException e) {
-            System.out.println("StringIndexOutOfBoundsException");
+            System.out.println(e);
 		}
 		catch (IllegalArgumentException e) {
-			System.out.println("IllegalArgumentException");
+			System.out.println(e);
 		}
 		catch (Exception e) {
-			System.out.println("Error occurred handling line");
+			System.out.println(e);
 			e.printStackTrace();
 		}
 	}
