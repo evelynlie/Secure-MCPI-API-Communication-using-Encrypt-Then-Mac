@@ -1,13 +1,12 @@
 import socket
 import select
 import sys
-from .util import flatten_parameters_to_bytestring
+from mcpi.util import flatten_parameters_to_bytestring
 import rsa # import RSA module
+from rsa.key import PublicKey
 import base64
 
 """ @author: Aron Nieminen, Mojang AB"""
-
-global global_private_key
 class RequestError(Exception):
     pass
 
@@ -19,61 +18,17 @@ class Connection:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((address, port))
         self.lastSent = ""
+        self.publicKey = None  # Add publicKey attribute
 
     def mEncrypted (self, f, msg):
         self.send(f, msg)
 
-    def keyGenerate(self):
-    # To generate public key and private key
-        (publicKey, privateKey) = rsa.newkeys(2048) #rsa.newskeys(number_of_bits)
-
-        # save publicKey in file
-        with open('public_key.pem', mode='wb') as public_file:
-            # Saves the key in PKCS#1 PEM format.
-            public_file.write(publicKey.save_pkcs1('PEM'))
-
-        # save privateKey in file
-        with open('private_key.pem', mode='wb') as private_file:
-            # Saves the key in PKCS#1 PEM format.
-            private_file.write(privateKey.save_pkcs1('PEM'))
-
-    def keyLoad(self):
-        # load publicKey from file
-        with open('public_key.pem', mode='rb') as public_file:
-            # Loads a key in PKCS#1 PEM format.
-            publicKey = rsa.PublicKey.load_pkcs1(public_file.read())
-
-        # load privateKey from file
-        with open('private_key.pem', mode='rb') as private_file:
-            # Loads a key in PKCS#1 PEM format.
-            privateKey = rsa.PrivateKey.load_pkcs1(private_file.read())
-
-        return publicKey, privateKey
-
     def encryption(self, message, publicKey):
-        # # Print message
-        # print("Message: ", message)
-        
-        # message_encode = bytes(message, 'utf-8')
-
-        # Encryption only happen if len(message_encode) <= rsa.common.byte_size(publicKey.n):
-        # Encrypt the encoded message with publicKey into ciphertext
+        # Encrypt the message with the PublicKey object
         ciphertext = rsa.encrypt(message, publicKey)
 
-        print("Ciphertext: ", base64.b64encode(ciphertext))
-
-        return base64.b64encode(ciphertext)
-
-    def decryption(self, ciphertext, privateKey):
-
-        try:
-            # Decrypt the ciphertext with private key to get the encoded message
-            message_encode = rsa.decrypt(ciphertext, privateKey)
-
-            # return decoded message
-            return message_encode.decode('ascii')
-        except:
-            return 'Error'
+        # Return the base64-encoded ciphertext
+        return base64.b64encode(ciphertext).decode('ascii')
     
     def drain(self):
         """Drains the socket of incoming data"""
@@ -94,16 +49,13 @@ class Connection:
         The protocol uses CP437 encoding - https://en.wikipedia.org/wiki/Code_page_437
         which is mildly distressing as it can't encode all of Unicode.
         """
-        # Generate public and private key
-        self.keyGenerate()
-
-        # Get public and private key
-        publicKey, global_private_key = self.keyLoad()
+        print("Public Key: ", self.publicKey)
 
         # Encrypt s with public key
-        encrypted_data = self.encryption(flatten_parameters_to_bytestring(data),publicKey)
+        encrypted_data = self.encryption(flatten_parameters_to_bytestring(data),self.publicKey)
+        print("Encrypted Data: ", encrypted_data)
 
-        s = b"".join([f, b"(", encrypted_data, b")", b"\n"])
+        s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")", b"\n"])
 
         # call _send function
         self._send(s)
@@ -115,7 +67,6 @@ class Connection:
         """
         self.drain()
         self.lastSent = s
-
         self.socket.sendall(s)
 
     def receive(self):
@@ -123,6 +74,15 @@ class Connection:
         s = self.socket.makefile("r").readline().rstrip("\n")
         if s == Connection.RequestFailed:
             raise RequestError("%s failed"%self.lastSent.strip())
+        
+        # Convert the received public key string to bytes
+        public_key_bytes = base64.b64decode(s.encode('ascii'))
+
+        # Convert the public key bytes to PEM format
+        pem_data = rsa.pem.save_pem(public_key_bytes, 'PUBLIC KEY')
+
+        # Load the public key from the PEM data
+        self.publicKey = rsa.key.PublicKey.load_pkcs1_openssl_pem(pem_data)
         return s
 
     def sendReceive(self, *data):

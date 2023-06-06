@@ -1,32 +1,30 @@
 package net.rozukke.elci;
+
+import java.io.FileReader;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
-import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
 import javax.crypto.Cipher;
 
-import org.bukkit.plugin.Plugin; 
-
 public class RSADecryption {
     public static ELCIPlugin plugin;
     
-    public static String messageDecryption(byte[] lineBytes) {
-        // Get private key
-        String privateKeyFilePath = "/Users/evelynlie/github-classroom/rmit-computing-technologies/cosc2804-apr-23-assignment-3-team-01-cosc2804-apr23/private_key.pem";
-        //String privateKeyFilePath = "private_key.pem";
-
+    public static String messageDecryption(PrivateKey privKey, byte[] lineBytes) {
         String plaintext = null;
         try {
-            // Read the private key from the PEM file
-            byte[] keyContentsBytes = readKeyFile(privateKeyFilePath);
-            PrivateKey privateKey = getPrivateKeyFromBytes(keyContentsBytes);
-            
+            PrivateKey privateKey = privKey;
+
+            System.out.println("Private Key: " + privateKey.toString());
+
             // Create a copy of the args array and store it in a new byte array called encryptedData
             byte[] encryptedMessage = Arrays.copyOfRange(lineBytes, 0, lineBytes.length);
 
@@ -42,35 +40,33 @@ public class RSADecryption {
     }
 
     // Reads private key file as a sequence of bytes, converts it into a String, and returns the String
-    private static byte[] readKeyFile(String filePath) throws IOException {
-        //File privatekeyFile = new File(filePath);
-        Path path = Paths.get(filePath);
-        byte[] bytes = Files.readAllBytes(path);
-        return bytes;
-    }
+    private static PrivateKey readKeyFile(String filePath) throws IOException {
+        String pemFilePath = filePath;
 
-    private static PrivateKey getPrivateKeyFromBytes(byte[] keyContentsBytes) throws Exception {
-        // // Remove PEM file header and footer lines, and whitespace
-        // String privateKeyBytes = new String(keyContentsBytes);
-        // String privateKeyPEM = privateKeyBytes
-        //         .replace("-----BEGIN PRIVATE KEY-----", "")
-        //         .replace("-----END PRIVATE KEY-----", "")
-        //         .replaceAll("\\s+", "") 
-        //         .replaceAll("-", ""); // Remove hyphens
+        try (BufferedReader reader = new BufferedReader(new FileReader(pemFilePath))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith("-----")) {
+                    sb.append(line.trim());
+                }
+            }
+            
+            // byte[] keyBytes = Base64.getDecoder().decode(sb.toString());
 
-        // // // Add padding if base64 has incorrect length
-        // // int paddingLength = 4 - (privateKeyPEM.length() % 4);
-        // // if (paddingLength < 4) {
-        // //     privateKeyPEM = privateKeyPEM + "=".repeat(paddingLength);
-        // // }
+            System.out.println(sb.toString());
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-        // // Decode base64 encoded key contents
-        // byte[] KeyBytes = Base64.getDecoder().decode(privateKeyPEM);
+            byte[] derData = Base64.getDecoder().decode(sb.toString().getBytes());
 
-        // Generate a private key object that is a copy of the private_key.pem
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(keyContentsBytes));
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        return keyFactory.generatePrivate(keySpec);
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(derData);
+            System.out.println(keySpec.toString());
+
+            return keyFactory.generatePrivate(keySpec);
+
+        } catch (Exception e) {
+            throw new IOException("Failed to read private key from file: " + filePath, e);
+        }
     }
 
     // Decrypt function using RSA

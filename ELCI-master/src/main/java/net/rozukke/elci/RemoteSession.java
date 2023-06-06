@@ -2,6 +2,7 @@
 
 package net.rozukke.elci;
 
+import org.bouncycastle.crypto.generators.RSAKeyPairGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Server;
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import java.security.*;
 import java.util.Base64;
 
 public class RemoteSession {
@@ -59,18 +61,34 @@ public class RemoteSession {
 
 	private Player attachedPlayer = null;
 
-	public RemoteSession(ELCIPlugin plugin, Socket socket) throws IOException {
+	private PrivateKey privateKey;
+    private PublicKey publicKey;
+
+	public RemoteSession(ELCIPlugin plugin, Socket socket) throws IOException, NoSuchAlgorithmException {
 		this.socket = socket;
 		this.plugin = plugin;
+		this.privateKey = null;
+		this.publicKey = null;
 		init();
 	}
 
-	public void init() throws IOException {
+	public void init() throws IOException, NoSuchAlgorithmException {
 		socket.setTcpNoDelay(true);
 		socket.setKeepAlive(true);
 		socket.setTrafficClass(0x10);
 		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream(), UTF_8));
 		this.out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), UTF_8));
+		// Generate public and private keys
+		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		keyGen.initialize(2048); // initialize with key size 2048
+		KeyPair keyPair = keyGen.generateKeyPair();
+		this.privateKey = keyPair.getPrivate();
+		this.publicKey = keyPair.getPublic();
+		System.out.println("Public Key: " + publicKey);
+		String publicKeyString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
+		System.out.println("Public Key String: " + publicKeyString);
+		// Send the public key to the client
+		outQueue.add(publicKeyString);
 		startThreads();
 		plugin.getLogger().info("Opened connection to" + socket.getRemoteSocketAddress() + ".");
 	}
@@ -81,7 +99,6 @@ public class RemoteSession {
 		outThread = new Thread(new OutputThread());
 		outThread.start();
 	}
-
 
 	public void setOrigin(Location origin) {
 		this.origin = origin;
@@ -108,7 +125,6 @@ public class RemoteSession {
 				break;
 			}
 		}
-
 		if (!running && inQueue.size() == 0) {
 			pendingRemoval = true;
 		}
@@ -117,8 +133,7 @@ public class RemoteSession {
 	protected void handleLine(String line) throws StringIndexOutOfBoundsException, IllegalArgumentException{
 		try{
 			// Print line
-			System.out.println(line);
-
+			System.out.println("Encrypted Message: " + line);
 			// // Convert the line string to bytes
 			// byte[] lineBytes = line.getBytes();
 
@@ -133,16 +148,17 @@ public class RemoteSession {
 			
 			// Get the method name from the decrypted line
 			String methodName = line.substring(0, line.indexOf("("));
+			System.out.println("Method Name: " + methodName);
 			//split string into args, handles , inside " i.e. ","
 			String[] args = line.substring(line.indexOf("(") + 1, line.length() - 1).split(",");
 			//System.out.println(methodName + ":" + Arrays.toString(args));
 			handleCommand(methodName, args);
 		}
 		catch (StringIndexOutOfBoundsException e) {
-            System.out.println(e);
+            System.out.println("StringIndexOutOfBoundsException");
 		}
 		catch (IllegalArgumentException e) {
-			System.out.println(e);
+			System.out.println("IllegalArgumentException");
 		}
 		catch (Exception e) {
 			System.out.println("Error occurred handling line");
@@ -150,38 +166,14 @@ public class RemoteSession {
 		}
 	}
 
-	// Decrypt arguments received from the client
-	private String[] decryptArgs(String[] args) {
-		String[] decryptedArgs = new String[args.length];
-		for (int i = 0; i < args.length; i++) {
-			// Convert the line string to bytes
-			byte[] lineBytes = args[i].getBytes();
-
-			// Encode the bytes to Base64
-			String base64String = Base64.getEncoder().encodeToString(lineBytes);
-			
-			// Convert the Base64-encoded line into a byte array
-			byte[] messageBytes = Base64.getDecoder().decode(base64String);
-			
-			// Decrypts the line
-			decryptedArgs[i] = RSADecryption.messageDecryption(messageBytes);
-		}
-		return decryptedArgs;
-	}
-
 	protected void handleCommand(String c, String[] args) {
-		
 		try {
 			// get the server
 			Server server = plugin.getServer();
 			
 			// get the world
 			World world = origin.getWorld();
-
-			// decrypt args using the decrypt function
-			args = decryptArgs(args);
 			
-			// world.getBlock
 			switch (c) {
 				case "testFailCommand": {
 					send("Fail");
@@ -779,11 +771,9 @@ public class RemoteSession {
 					break;
 			}
 		} catch (Exception e) {
-			
 			plugin.getLogger().warning("Error occurred handling command");
 			e.printStackTrace();
 			send("Fail");
-		
 		}
 	}
 
@@ -830,7 +820,6 @@ public class RemoteSession {
 				}
 			}
 		}
-
 		return blockData.substring(0, blockData.length() > 0 ? blockData.length() - 1 : 0);	// We don't want last comma
 	}
 
@@ -886,7 +875,6 @@ public class RemoteSession {
 		}
 		return player;
 	}
-
 
 	public Location parseRelativeBlockLocation(String xstr, String ystr, String zstr) {
 		int x = (int) Double.parseDouble(xstr);
