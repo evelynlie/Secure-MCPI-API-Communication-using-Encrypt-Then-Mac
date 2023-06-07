@@ -52,14 +52,13 @@ class Connection:
         The protocol uses CP437 encoding - https://en.wikipedia.org/wiki/Code_page_437
         which is mildly distressing as it can't encode all of Unicode.
         """
-        print("Public Key: ", self.publicKey)
+        # print("Public Key: ", self.publicKey)
         print("Mac Key: ", self.secret_mac_key)
 
         # Encrypt s with public key
         encrypted_data = self.encryption(flatten_parameters_to_bytestring(data),self.publicKey)
         print("Encrypted Data: ", encrypted_data)
 
-    
         #s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")", b"\n"])
         s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")"])
 

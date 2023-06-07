@@ -234,7 +234,6 @@ class CmdCamera:
         """Set camera entity position (x,y,z)"""
         self.conn.send(b"camera.setPos", args)
 
-
 class CmdEvents:
     """Events"""
     def __init__(self, connection):
@@ -389,7 +388,6 @@ class Minecraft:
     @staticmethod
     def create(address = "localhost", port = 4711):
         return Minecraft(Connection(address, port))
-
 
 if __name__ == "__main__":
     mc = Minecraft.create()

@@ -74,6 +74,7 @@ public class RemoteSession {
     private PublicKey publicKey;
     private String privateKeyString; 
 	private String macKeyString;
+	private Key macKey;
 
 	public RemoteSession(ELCIPlugin plugin, Socket socket) throws IOException, NoSuchAlgorithmException, InvalidKeyException {
 		this.socket = socket;
@@ -82,9 +83,9 @@ public class RemoteSession {
 		this.publicKey = null;
 		this.privateKeyString = null;
 		this.macKeyString = null;
+		this.macKey = null;
 		init();
 	}
-	
 
 	public void init() throws IOException, NoSuchAlgorithmException, InvalidKeyException {
 		socket.setTcpNoDelay(true);
@@ -99,15 +100,9 @@ public class RemoteSession {
 		this.privateKey = keyPair.getPrivate();
 		privateKeyString = Base64.getEncoder().encodeToString(privateKey.getEncoded());
 		this.publicKey = keyPair.getPublic();
-		System.out.println("Public Key: " + publicKey);
+		// System.out.println("Public Key: " + publicKey);
 		String publicKeyString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
-		System.out.println("Public Key String: " + publicKeyString);
-		System.out.println("Public Key Length in Java: " + publicKeyString.length());
-		
-		// Send the RSA public key to the client
-		// outQueue.add(publicKeyString);
 
-		// Generate HMAC public key
 		// Create KeyGenerator obj
 		KeyGenerator macKeyGenerator = KeyGenerator.getInstance("DES");
 
@@ -119,6 +114,7 @@ public class RemoteSession {
 
 		//Creating/Generating a key
 		Key macKey = macKeyGenerator.generateKey();	 
+		this.macKey = macKey;
 
 		//Creating a Mac object
 		Mac mac = Mac.getInstance("HmacSHA256");
@@ -127,17 +123,12 @@ public class RemoteSession {
 		mac.init(macKey);
 
 		macKeyString = Base64.getEncoder().encodeToString(macKey.getEncoded());
-
 		System.out.println("Mac Key String: " + macKeyString);
 
 		// Send the mac object to the client
 		String combinekey = publicKeyString + "," + macKeyString;
 
 		outQueue.add(combinekey);
-
-		System.out.println("First Element: " + outQueue.peekFirst());
-		System.out.println("Last Element: " + outQueue.peekLast());
-
 		startThreads();
 		plugin.getLogger().info("Opened connection to" + socket.getRemoteSocketAddress() + ".");
 	}
@@ -206,6 +197,20 @@ public class RemoteSession {
         return privateKey;
     }
 
+	// Calculate HMAC-SHA-256 function
+	public static byte[] calcHmacSha256(byte[] secretKey, byte[] message) {
+		byte[] hmacSha256 = null;
+		try {
+		  Mac mac = Mac.getInstance("HmacSHA256");
+		  SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, "HmacSHA256");
+		  mac.init(secretKeySpec);
+		  hmacSha256 = mac.doFinal(message);
+		} catch (Exception e) {
+		  throw new RuntimeException("Failed to calculate HMAC-SHA256", e);
+		}
+		return hmacSha256;
+	  }
+
 	protected void handleLine(String line) throws StringIndexOutOfBoundsException, IllegalArgumentException{
 		try{
 			// Print line
@@ -227,14 +232,7 @@ public class RemoteSession {
 			
 			// Get the method name from the decrypted line
 			String methodName = line.substring(0, line.indexOf("("));
-			//split string into args, handles , inside " i.e. ","
-			// plaintext = (abc)
-			// String[] args = plaintext.substring(plaintext.indexOf("(") + 1, plaintext.length() - 1).split(",");
 			String[] args = plaintext.split(",");
-			// args += ')';
-			// String[] args = "(" + _s;
-			
-			//System.out.println(methodName + ":" + Arrays.toString(args));
 			handleCommand(methodName, args);
 		}
 		catch (StringIndexOutOfBoundsException e) {
