@@ -280,7 +280,7 @@ class Minecraft:
         self.entity = CmdEntity(connection)
         self.player = CmdPlayer(connection)
         self.events = CmdEvents(connection)
-        self.conn.receivePublicKey()
+        self.conn.receiveRSAPublicKeyMacKey()
 
     def getBlock(self, *args):
         """Get block (x,y,z) => id:int"""

@@ -30,6 +30,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 public class RemoteSession {
 
@@ -70,23 +73,26 @@ public class RemoteSession {
 	private PrivateKey privateKey;
     private PublicKey publicKey;
     private String privateKeyString; 
+	private String macKeyString;
 
-	public RemoteSession(ELCIPlugin plugin, Socket socket) throws IOException, NoSuchAlgorithmException {
+	public RemoteSession(ELCIPlugin plugin, Socket socket) throws IOException, NoSuchAlgorithmException, InvalidKeyException {
 		this.socket = socket;
 		this.plugin = plugin;
 		this.privateKey = null;
 		this.publicKey = null;
 		this.privateKeyString = null;
+		this.macKeyString = null;
 		init();
 	}
+	
 
-	public void init() throws IOException, NoSuchAlgorithmException {
+	public void init() throws IOException, NoSuchAlgorithmException, InvalidKeyException {
 		socket.setTcpNoDelay(true);
 		socket.setKeepAlive(true);
 		socket.setTrafficClass(0x10);
 		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream(), UTF_8));
 		this.out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), UTF_8));
-		// Generate public and private keys
+		// Generate RSA public and private keys
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 		keyGen.initialize(2048); // initialize with key size 2048
 		KeyPair keyPair = keyGen.generateKeyPair();
@@ -97,8 +103,41 @@ public class RemoteSession {
 		String publicKeyString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
 		System.out.println("Public Key String: " + publicKeyString);
 		System.out.println("Public Key Length in Java: " + publicKeyString.length());
-		// Send the public key to the client
-		outQueue.add(publicKeyString);
+		
+		// Send the RSA public key to the client
+		// outQueue.add(publicKeyString);
+
+		// Generate HMAC public key
+		// Create KeyGenerator obj
+		KeyGenerator macKeyGenerator = KeyGenerator.getInstance("DES");
+
+		//Creating SecureRandom obj
+		SecureRandom macSecRandom = new SecureRandom();
+
+		//Initializing the macKeyGenerator
+		macKeyGenerator.init(macSecRandom);
+
+		//Creating/Generating a key
+		Key macKey = macKeyGenerator.generateKey();	 
+
+		//Creating a Mac object
+		Mac mac = Mac.getInstance("HmacSHA256");
+
+		//Initializing the Mac object
+		mac.init(macKey);
+
+		macKeyString = Base64.getEncoder().encodeToString(macKey.getEncoded());
+
+		System.out.println("Mac Key String: " + macKeyString);
+
+		// Send the mac object to the client
+		String combinekey = publicKeyString + "," + macKeyString;
+
+		outQueue.add(combinekey);
+
+		System.out.println("First Element: " + outQueue.peekFirst());
+		System.out.println("Last Element: " + outQueue.peekLast());
+
 		startThreads();
 		plugin.getLogger().info("Opened connection to" + socket.getRemoteSocketAddress() + ".");
 	}
@@ -173,7 +212,10 @@ public class RemoteSession {
 			System.out.println("Message from Python: " + line);
 
 			// Get the encryted message from the line
-			String encryptedMessage = line.substring(line.indexOf("(") + 1, line.length() - 1);
+			String encryptedMessage = line.substring(line.indexOf("(") + 1, line.indexOf(")"));
+			// Get the mac tag from the line
+			String mac = line.substring(line.indexOf(")") + 1, line.length());
+			
 			System.out.println("Encrypted Message: " + encryptedMessage);
 
 			System.out.println("Private Key string: " + privateKeyString);

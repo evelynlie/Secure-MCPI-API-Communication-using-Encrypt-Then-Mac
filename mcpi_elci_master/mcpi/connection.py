@@ -5,6 +5,8 @@ from mcpi.util import flatten_parameters_to_bytestring
 import rsa # import RSA module
 from rsa.key import PublicKey
 import base64
+import hashlib
+import hmac
 
 """ @author: Aron Nieminen, Mojang AB"""
 class RequestError(Exception):
@@ -19,6 +21,7 @@ class Connection:
         self.socket.connect((address, port))
         self.lastSent = ""
         self.publicKey = None  # Add publicKey attribute
+        self.secret_mac_key = None # Add secret_mac_key attribute
 
     def mEncrypted (self, f, msg):
         self.send(f, msg)
@@ -50,12 +53,26 @@ class Connection:
         which is mildly distressing as it can't encode all of Unicode.
         """
         print("Public Key: ", self.publicKey)
+        print("Mac Key: ", self.secret_mac_key)
 
         # Encrypt s with public key
         encrypted_data = self.encryption(flatten_parameters_to_bytestring(data),self.publicKey)
         print("Encrypted Data: ", encrypted_data)
 
-        s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")", b"\n"])
+    
+        #s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")", b"\n"])
+        s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")"])
+
+        # Create a new HMAC "signature", and then base64-encode it
+        hash = hmac.new(self.secret_mac_key, s, hashlib.sha256)
+
+        # to lowercase hexits
+        hash.hexdigest()
+
+        # to lowercase base64
+        hash_byte = base64.b64encode(hash.digest())
+
+        s += hash_byte + b"\n"
 
         # call _send function
         self._send(s)
@@ -77,20 +94,28 @@ class Connection:
         
         return s
     
-    def receivePublicKey(self):
+    def receiveRSAPublicKeyMacKey(self):
         """Receives data. Note that the trailing newline '\n' is trimmed"""
         s = self.socket.makefile("r").readline().rstrip("\n")
         if s == Connection.RequestFailed:
             raise RequestError("%s failed"%self.lastSent.strip())
         
+        print(f'received message raw : {s}')
+        print(f'received message type : {type(s)}')
+        
         # Convert the received public key string to bytes
-        public_key_bytes = base64.b64decode(s)
+        public_key_bytes = base64.b64decode(s[0:s.index(",")])
 
         # Convert the public key bytes to PEM format
         pem_data = rsa.pem.save_pem(public_key_bytes, 'PUBLIC KEY')
 
         # Load the public key from the PEM data
         self.publicKey = rsa.key.PublicKey.load_pkcs1_openssl_pem(pem_data)
+
+        # Convert the received mac key string to bytes
+        print(s[s.index(",")+1:len(s)-1])
+        self.secret_mac_key = base64.b64decode(s[s.index(",")+1:len(s)])
+
         return s
 
     def sendReceive(self, *data):
