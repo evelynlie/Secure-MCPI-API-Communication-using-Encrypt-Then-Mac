@@ -284,6 +284,7 @@ class Minecraft:
 
     def getBlock(self, *args):
         """Get block (x,y,z) => id:int"""
+        self.conn.receive()
         return int(self.conn.sendReceive(b"world.getBlock", intFloor(args)))
 
     def getBlockWithData(self, *args):

@@ -174,23 +174,15 @@ public class RemoteSession {
 			System.out.println("Message from Python: " + line);
 
 			// Get the encryted message from the line
-			String encryptedMessage = line.substring(10, line.length() - 1);
+			String encryptedMessage = line.substring(line.indexOf("(") + 1, line.length() - 1);
 			System.out.println("Encrypted Message: " + encryptedMessage);
 
-			// Convert the encrypted message string to bytes
-			byte[] encryptedMessageBytes = encryptedMessage.getBytes();
-			System.out.println("MessageBytes Length: " + encryptedMessageBytes.length);
-
 			System.out.println("Private Key string: " + privateKeyString);
-			int totalBytes = privateKeyString.getBytes().length;
-			System.out.println("Total Private Key Bytes: " + totalBytes);
 
 			String decryptedString = decrypt(encryptedMessage, privateKeyString);
 
 			String plaintext = new String(decryptedString);
 			System.out.println("Decrypted Message: " + plaintext);
-
-			// plaintext += ')';
 			
 			// Get the method name from the decrypted line
 			String methodName = line.substring(0, line.indexOf("("));
@@ -200,9 +192,7 @@ public class RemoteSession {
 			String[] args = plaintext.split(",");
 			// args += ')';
 			// String[] args = "(" + _s;
-
-			// args = 
-
+			
 			//System.out.println(methodName + ":" + Arrays.toString(args));
 			handleCommand(methodName, args);
 		}
