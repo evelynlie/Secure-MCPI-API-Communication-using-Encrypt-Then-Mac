@@ -75,6 +75,14 @@ class Connection:
         if s == Connection.RequestFailed:
             raise RequestError("%s failed"%self.lastSent.strip())
         
+        return s
+    
+    def receivePublicKey(self):
+        """Receives data. Note that the trailing newline '\n' is trimmed"""
+        s = self.socket.makefile("r").readline().rstrip("\n")
+        if s == Connection.RequestFailed:
+            raise RequestError("%s failed"%self.lastSent.strip())
+        
         # Convert the received public key string to bytes
         public_key_bytes = base64.b64decode(s)
 

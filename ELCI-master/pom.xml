@@ -44,11 +44,11 @@
             <version>1.12.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
             <version>1.68</version>
-        </dependency>
+        </dependency> -->
 
         <!--Test Dependencies-->
         <dependency>

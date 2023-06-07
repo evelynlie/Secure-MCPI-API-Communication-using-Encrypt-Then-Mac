@@ -276,15 +276,14 @@ class Minecraft:
     """The main class to interact with a running instance of Minecraft Pi."""
     def __init__(self, connection):
         self.conn = connection
-
         self.camera = CmdCamera(connection)
         self.entity = CmdEntity(connection)
         self.player = CmdPlayer(connection)
         self.events = CmdEvents(connection)
+        self.conn.receivePublicKey()
 
     def getBlock(self, *args):
         """Get block (x,y,z) => id:int"""
-        self.conn.receive()
         return int(self.conn.sendReceive(b"world.getBlock", intFloor(args)))
 
     def getBlockWithData(self, *args):
@@ -356,7 +355,7 @@ class Minecraft:
     def postToChat(self, msg):
         """Post a message to the game chat"""
         print('POSTTOCHAT WORK')
-        self.conn.receive()
+        # self.conn.receive()
         self.conn.send(b"chat.post", msg)
 
     def doCommand(self, command):
