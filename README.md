@@ -25,3 +25,5 @@ Ideally, any disputes reagarding the contributions should be resolved prior to s
     - Wrote a brief overview of the Encrypt-and-MAC technique along with its pros and cons.
     - Provide a simple and straight-forward explanation about Asymmetric Encryption and Message Authentication Code (MAC), with references.
 - Phase 2:
+    - Complete Implementation of RSA encryption in Python and decryption in Java using several functions, assisted by Kent in dealing minor bugs.
+    - Implement HMAC calculation in Java to be compared with the one generated in Python.
