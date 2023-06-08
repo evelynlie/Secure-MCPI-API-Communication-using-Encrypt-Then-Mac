@@ -123,7 +123,6 @@ public class RemoteSession {
 		mac.init(macKey);
 
 		macKeyString = Base64.getEncoder().encodeToString(macKey.getEncoded());
-		System.out.println("Mac Key String: " + macKeyString);
 
 		// Send the mac object to the client
 		String combinekey = publicKeyString + "," + macKeyString;
@@ -186,12 +185,14 @@ public class RemoteSession {
         KeyFactory keyFactory = null;
         try {
             keyFactory = KeyFactory.getInstance("RSA");
-        } catch (NoSuchAlgorithmException e) {
+        } 
+		catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         try {
             privateKey = keyFactory.generatePrivate(keySpec);
-        } catch (InvalidKeySpecException e) {
+        } 
+		catch (InvalidKeySpecException e) {
             e.printStackTrace();
         }
         return privateKey;
@@ -201,12 +202,12 @@ public class RemoteSession {
 	public static byte[] calcHmacSha256(byte[] secretKey, byte[] message) {
 		byte[] hmacSha256 = null;
 		try {
-		  Mac mac = Mac.getInstance("HmacSHA256");
-		  SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, "HmacSHA256");
-		  mac.init(secretKeySpec);
-		  hmacSha256 = mac.doFinal(message);
-		} catch (Exception e) {
-		  throw new RuntimeException("Failed to calculate HMAC-SHA256", e);
+			Mac hasher = Mac.getInstance("HmacSHA256");
+			hasher.init(new SecretKeySpec(secretKey, "HmacSHA256"));
+		  	hmacSha256 = hasher.doFinal(message);
+		} 
+		catch (Exception e) {
+			throw new RuntimeException("Failed to calculate HMAC-SHA256", e);
 		}
 		return hmacSha256;
 	  }
@@ -214,33 +215,44 @@ public class RemoteSession {
 	protected void handleLine(String line) throws StringIndexOutOfBoundsException, IllegalArgumentException{
 		try{
 			// Print line
-			System.out.println("Message from Python: " + line);
+			// System.out.println("Message from Python: " + line);
+			String mcpiFunction = line.substring(0, line.indexOf(")") + 1);
 
 			// Get the encryted message from the line
 			String encryptedMessage = line.substring(line.indexOf("(") + 1, line.indexOf(")"));
 			// Get the mac tag from the line
 			String mac = line.substring(line.indexOf(")") + 1, line.length());
 			
-			System.out.println("Encrypted Message: " + encryptedMessage);
+			// System.out.println("Encrypted Message: " + encryptedMessage);
 
-			System.out.println("Private Key string: " + privateKeyString);
+			// Calculate the MAC tag to be compared with the one from Python
+			byte[] keyBytes = Base64.getDecoder().decode(macKeyString);
+			byte[] macKeyBytes = calcHmacSha256(keyBytes, mcpiFunction.getBytes());
+			String macKeyBase64 = Base64.getEncoder().encodeToString(macKeyBytes);
 
-			String decryptedString = decrypt(encryptedMessage, privateKeyString);
+			// Compare Python and Java MAC
+			// If equal, decyrpt the message to be sent to the server
+			// Else, produce an error saying the message has been tampered.
+			if (!(mac.equals(macKeyBase64))){
+				System.out.println("MAC tags do not match");
+			} else{
+				// Decrypt the message sent from Python
+				String plaintext = decrypt(encryptedMessage, privateKeyString);
 
-			String plaintext = new String(decryptedString);
-			System.out.println("Decrypted Message: " + plaintext);
-			
-			// Get the method name from the decrypted line
-			String methodName = line.substring(0, line.indexOf("("));
-			String[] args = plaintext.split(",");
-			handleCommand(methodName, args);
-		}
+				System.out.println("Decrypted Message: " + plaintext);
+				
+				// Get the method name from the decrypted line
+				String methodName = line.substring(0, line.indexOf("("));
+				String[] args = plaintext.split(",");
+				handleCommand(methodName, args);
+			}
+		} 
 		catch (StringIndexOutOfBoundsException e) {
             System.out.println(e);
-		}
+		} 
 		catch (IllegalArgumentException e) {
 			System.out.println(e);
-		}
+		} 
 		catch (Exception e) {
 			System.out.println(e);
 			e.printStackTrace();

@@ -53,7 +53,8 @@ class Connection:
         which is mildly distressing as it can't encode all of Unicode.
         """
         # print("Public Key: ", self.publicKey)
-        print("Mac Key: ", self.secret_mac_key)
+        # print("Mac Key: ", self.secret_mac_key)
+        java_key = base64.b64encode(self.secret_mac_key).decode('ascii')
 
         # Encrypt s with public key
         encrypted_data = self.encryption(flatten_parameters_to_bytestring(data),self.publicKey)
@@ -62,18 +63,16 @@ class Connection:
         #s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")", b"\n"])
         s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")"])
 
-        # Create a new HMAC "signature", and then base64-encode it
+        # Calculate the HMAC "signature" of the encrypted message
         hash = hmac.new(self.secret_mac_key, s, hashlib.sha256)
 
-        # to lowercase hexits
-        hash.hexdigest()
-
         # to lowercase base64
-        hash_byte = base64.b64encode(hash.digest())
+        hash_bytes = base64.b64encode(hash.digest())
 
-        s += hash_byte + b"\n"
+        # Concatenate the encrypted message and the HMAC signature into a single byte string
+        s += hash_bytes + b"\n"
 
-        # call _send function
+        # call _send function to send the encrypted message and the HMAC signature of it to Java server
         self._send(s)
 
     def _send(self, s):
@@ -99,9 +98,6 @@ class Connection:
         if s == Connection.RequestFailed:
             raise RequestError("%s failed"%self.lastSent.strip())
         
-        print(f'received message raw : {s}')
-        print(f'received message type : {type(s)}')
-        
         # Convert the received public key string to bytes
         public_key_bytes = base64.b64decode(s[0:s.index(",")])
 
@@ -112,7 +108,6 @@ class Connection:
         self.publicKey = rsa.key.PublicKey.load_pkcs1_openssl_pem(pem_data)
 
         # Convert the received mac key string to bytes
-        print(s[s.index(",")+1:len(s)-1])
         self.secret_mac_key = base64.b64decode(s[s.index(",")+1:len(s)])
 
         return s
