@@ -17,6 +17,7 @@ Please indicate where to find your video demo. You can include it in this repo i
 - Phase 2:
     - Implement HMAC authentication generation in Python
     - Assist Evelyn in fixing minor bugs for RSA encryption in Python
+    - Note that Go Chee Kin have request assistances from Mr. Alessio Bonti and Roman Artemis to solve Maven packaging issues (not generating required files to run ELCI) and no success has yet to achieve. Hence there's failure in running modified RemoteServer.java and elci.jar files in Minecraft server. So, my contributions/commits are created on Evelyn's laptop and submitted using Evelyn's Github Username due to failure in running modified changes in my own Minecraft server. Hope you understand.
 
 ### Evelyn Lie, s3951140 (Github Username: eve-s3951140)
 - Phase 1: 
