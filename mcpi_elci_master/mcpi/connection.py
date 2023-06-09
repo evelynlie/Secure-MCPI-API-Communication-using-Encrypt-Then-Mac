@@ -94,16 +94,16 @@ class Connection:
         if s == Connection.RequestFailed:
             raise RequestError("%s failed"%self.lastSent.strip())
         
-        # Convert the received public key string to bytes
+        # Convert the received string (RSA public key,MAC key) to bytes
         public_key_bytes = base64.b64decode(s[0:s.index(",")])
 
-        # Convert the public key bytes to PEM format
+        # Convert the RSA public key bytes to PEM format
         pem_data = rsa.pem.save_pem(public_key_bytes, 'PUBLIC KEY')
 
-        # Load the public key from the PEM data
+        # Load the RSA public key from the PEM data
         self.publicKey = rsa.key.PublicKey.load_pkcs1_openssl_pem(pem_data)
 
-        # Convert the received mac key string to bytes
+        # Convert the received MAC key string to bytes
         self.secret_mac_key = base64.b64decode(s[s.index(",")+1:len(s)])
 
         return s
