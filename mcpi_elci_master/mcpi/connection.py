@@ -23,9 +23,6 @@ class Connection:
         self.publicKey = None  # Add publicKey attribute
         self.secret_mac_key = None # Add secret_mac_key attribute
 
-    def mEncrypted (self, f, msg):
-        self.send(f, msg)
-
     def encryption(self, message, publicKey):
         # Encrypt the message with the PublicKey object
         ciphertext = rsa.encrypt(message, publicKey)
@@ -52,15 +49,14 @@ class Connection:
         The protocol uses CP437 encoding - https://en.wikipedia.org/wiki/Code_page_437
         which is mildly distressing as it can't encode all of Unicode.
         """
-        # print("Public Key: ", self.publicKey)
-        # print("Mac Key: ", self.secret_mac_key)
+        # Decode the secret_mac_key in ascii
         java_key = base64.b64encode(self.secret_mac_key).decode('ascii')
 
         # Encrypt s with public key
         encrypted_data = self.encryption(flatten_parameters_to_bytestring(data),self.publicKey)
         print("Encrypted Data: ", encrypted_data)
 
-        #s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")", b"\n"])
+        # Concatenate f (method name) with encrypted_data (ASCII Format) into single byte string
         s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")"])
 
         # Calculate the HMAC "signature" of the encrypted message
