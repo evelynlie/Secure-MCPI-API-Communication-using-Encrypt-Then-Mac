@@ -355,8 +355,6 @@ class Minecraft:
 
     def postToChat(self, msg):
         """Post a message to the game chat"""
-        print('POSTTOCHAT WORK')
-        # self.conn.receive()
         self.conn.send(b"chat.post", msg)
 
     def doCommand(self, command):
