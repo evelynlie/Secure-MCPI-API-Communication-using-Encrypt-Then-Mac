@@ -24,5 +24,7 @@ Please indicate where to find your video demo. You can include it in this repo i
     - Wrote a brief overview of the Encrypt-and-MAC technique along with its pros and cons.
     - Provide a simple and straight-forward explanation about Asymmetric Encryption and Message Authentication Code (MAC), with references.
 - Phase 2:
+    - Create a RSA and HMAC key generation in Java to be sent into Python. 
+        - The RSA key size is specified in 2048 bits and HMAC key size is 256 bits.
     - Complete Implementation of RSA encryption in Python and decryption in Java using several functions, assisted by Kent in dealing minor bugs.
-    - Implement HMAC calculation in Java to be compared with the one generated in Python.
+    - Implement HMAC calculation in Java to be compared with the one generated in Python. If the HMAC value from Python and Java is different, the message will not be decrypted since the authenticity and integrity of the message has been corupted.
