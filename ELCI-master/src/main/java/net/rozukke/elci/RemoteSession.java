@@ -238,12 +238,13 @@ public class RemoteSession {
 			} else{
 				// Decrypt the message sent from Python
 				String plaintext = decrypt(encryptedMessage, privateKeyString);
-
-				System.out.println("Decrypted Message: " + plaintext);
 				
 				// Get the method name from the decrypted line
 				String methodName = line.substring(0, line.indexOf("("));
 				String[] args = plaintext.split(",");
+
+				System.out.println("Decrypted Message: " + methodName + "(" + plaintext + ")");
+
 				handleCommand(methodName, args);
 			}
 		} 
