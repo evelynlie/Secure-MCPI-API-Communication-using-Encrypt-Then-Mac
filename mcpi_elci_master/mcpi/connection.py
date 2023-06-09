@@ -42,27 +42,24 @@ class Connection:
             sys.stderr.write(e)
 
     def send(self, f, *data):
-        print("SEND FUNCTION WORK")
         """
         Sends data. Note that a trailing newline '\n' is added here
 
         The protocol uses CP437 encoding - https://en.wikipedia.org/wiki/Code_page_437
         which is mildly distressing as it can't encode all of Unicode.
         """
-        # Decode the secret_mac_key in ascii
-        java_key = base64.b64encode(self.secret_mac_key).decode('ascii')
 
-        # Encrypt s with public key
+        # Encrypt data with public key
         encrypted_data = self.encryption(flatten_parameters_to_bytestring(data),self.publicKey)
         print("Encrypted Data: ", encrypted_data)
 
-        # Concatenate f (method name) with encrypted_data (ASCII Format) into single byte string
+        # Concatenate f (method name) with encrypted_data into byte string
         s = b"".join([f, b"(", encrypted_data.encode('ascii'), b")"])
 
         # Calculate the HMAC "signature" of the encrypted message
         hash = hmac.new(self.secret_mac_key, s, hashlib.sha256)
 
-        # to lowercase base64
+        # lowercase the hash with base64
         hash_bytes = base64.b64encode(hash.digest())
 
         # Concatenate the encrypted message and the HMAC signature into a single byte string
