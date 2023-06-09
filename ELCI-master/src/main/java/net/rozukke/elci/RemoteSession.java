@@ -242,8 +242,7 @@ public class RemoteSession {
 				// Get the method name from the decrypted line
 				String methodName = line.substring(0, line.indexOf("("));
 				String[] args = plaintext.split(",");
-
-				System.out.println("Decrypted Message: " + methodName + "(" + plaintext + ")");
+				plugin.getLogger().info("Decrypted Message: " + methodName + "(" + plaintext + ")");
 
 				handleCommand(methodName, args);
 			}
