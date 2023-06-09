@@ -6,8 +6,8 @@ Please indicate where to find your video demo. You can include it in this repo i
 
 # Mandatory: Student contributions
 - Go Chee Kin: 25%
-- Evelyn Lie: 25%
-- Nicholas Sito: 25%
+- Evelyn Lie: 30%
+- Nicholas Sito: 20%
 - Edward Lim Padmajaya: 25%
 
 ### Go Chee Kin, s3955624 (Github Username: rmit-kent-go)
