@@ -4,7 +4,7 @@ This is the README file for Assignment 3 in Programming Studio 2 (COSC2804).
 
 Please find the attached report in the repo: Group 1 Report - CCA Protection
 
-### Group 01 Video Presentation:
+### Group 01 Video Presentation: https://www.youtube.com/watch?v=AbIlN36BoHU
 
 # Instruction
 
