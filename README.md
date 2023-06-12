@@ -40,3 +40,9 @@ pip install rsa
         - The RSA key size is specified in 2048 bits and HMAC key size is 256 bits.
     - Complete Implementation of RSA encryption in Python and decryption in Java using several functions, assisted by Kent in dealing minor bugs.
     - Implement HMAC calculation in Java to be compared with the one generated in Python. If the HMAC value from Python and Java is different, the message will not be decrypted since the authenticity and integrity of the message has been corupted.
+### Edward Lim Padmajaya, s3951140 (Github Username: EdwardLimPadmajaya)
+- Phase 1: 
+    - Wrote a brief introduction to CCA and basic terminologies.
+    - Wrote a brief overview of the Hash-then-Encrypt technique along with its pros and cons.
+    - Provide a report on the HMAC's security features, efficiency, security draw-backs and underlying technical details.
+    - Provide a comparision report on HMAC-SHA256 compared to other types of HMAC.
