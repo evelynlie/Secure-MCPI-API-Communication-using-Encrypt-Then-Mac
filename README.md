@@ -46,3 +46,10 @@ pip install rsa
     - Wrote a brief overview of the Hash-then-Encrypt technique along with its pros and cons.
     - Provide a report on the HMAC's security features, efficiency, security draw-backs and underlying technical details.
     - Provide a comparision report on HMAC-SHA256 compared to other types of HMAC.
+
+### Nicholas Sito, s3951974 (Github Username: nicholassitoRMIT)
+- Phase 1:
+    - Wrote a summary on the Encrypt-then-MAC method as well as its pros and cons
+    - Wrote a short justification on why we chose this method to be implemented in our project
+- Phase 2:
+    - Responsible for editing the video for the assignment
